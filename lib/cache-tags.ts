@@ -1,0 +1,15 @@
+export const TAGS = {
+  clients: "clients",
+  client: (id: string) => `client-${id}`,
+  offshores: "offshores",
+  offshore: (id: string) => `offshore-${id}`,
+  obligations: "obligations",
+  dashboard: "dashboard",
+  delinquency: "delinquency",
+  jurisdictions: "jurisdictions",
+  providers: "providers",
+  users: "users",
+  opening: "opening",
+  simulator: "simulator",
+  auditLogs: "audit-logs",
+} as const;

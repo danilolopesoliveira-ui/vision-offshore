@@ -1,0 +1,398 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String     @id @default(cuid())
+  email          String     @unique
+  name           String
+  role           UserRole   @default(OPERATOR)
+  supabaseUserId String?    @unique
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  auditLogs      AuditLog[]
+  accessCodesGenerated AccessCode[] @relation("CodeCreator")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  OPERATOR
+}
+
+model AccessCode {
+  id           String    @id @default(cuid())
+  code         String    @unique
+  createdById  String
+  createdBy    User      @relation("CodeCreator", fields: [createdById], references: [id])
+  intendedRole UserRole
+  usedBy       String?
+  usedAt       DateTime?
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
+}
+
+model IndividualClient {
+  id                     String            @id @default(cuid())
+  name                   String
+  documentType           DocumentType
+  documentNumber         String
+  address                Json
+  totalDeclaredWealthUsd Decimal?          @db.Decimal(16, 2)
+  driveFolderId          String?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  documents              DocumentAsset[]
+  offshores              OffshoreCompany[]
+  openingProcesses       OpeningProcess[]
+
+  @@index([name])
+  @@index([documentNumber])
+}
+
+enum DocumentType {
+  CPF
+  CNH
+  PASSPORT
+}
+
+model Jurisdiction {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  countryCode String
+  isTaxHaven  Boolean @default(false)
+  active      Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  obligationTemplates    ObligationTemplate[]
+  openingProcessTemplate OpeningProcessTemplate?
+  offshores              OffshoreCompany[]
+}
+
+model ServiceProvider {
+  id              String   @id @default(cuid())
+  name            String
+  email           String
+  portalUrl       String?
+  responsibleName  String?
+  responsiblePhone String?
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  credential          ServiceProviderCredential?
+  obligationTemplates ObligationTemplate[]
+  obligations         Obligation[]
+}
+
+model ServiceProviderCredential {
+  id                String   @id @default(cuid())
+  providerId        String   @unique
+  provider          ServiceProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  encryptedUsername String
+  encryptedPassword String
+  keyVersion        Int      @default(1)
+  updatedAt         DateTime @updatedAt
+}
+
+model ObligationTemplate {
+  id                 String    @id @default(cuid())
+  jurisdictionId     String
+  jurisdiction       Jurisdiction @relation(fields: [jurisdictionId], references: [id])
+  nature             String
+  recurrence         Recurrence
+  serviceProviderId  String?
+  serviceProvider    ServiceProvider? @relation(fields: [serviceProviderId], references: [id])
+  documentTemplateId String?
+  documentTemplate   DocumentAsset?   @relation("TemplateDoc", fields: [documentTemplateId], references: [id])
+  invoiceValue       Decimal?         @db.Decimal(14, 2)
+  invoiceCurrency    String           @default("USD")
+  penaltyValue       Decimal?         @db.Decimal(14, 2)
+  penaltyCondition   String?
+  anchorMonth        Int?
+  anchorDay          Int?
+  active             Boolean          @default(true)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  instances Obligation[]
+}
+
+enum Recurrence {
+  ONE_OFF
+  MONTHLY
+  QUARTERLY
+  SEMIANNUAL
+  ANNUAL
+}
+
+model OffshoreCompany {
+  id                 String        @id @default(cuid())
+  individualClientId String
+  individualClient   IndividualClient @relation(fields: [individualClientId], references: [id])
+  name               String
+  jurisdictionId     String
+  jurisdiction       Jurisdiction  @relation(fields: [jurisdictionId], references: [id])
+  jointTenancy       Boolean       @default(false)
+  declaredWealthUsd  Decimal?      @db.Decimal(16, 2)
+  driveFolderId      String?
+  status             OffshoreStatus @default(ACTIVE)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  jointTenants     JointTenant[]
+  gennesysContract GennesysContract?
+  obligations      Obligation[]
+  openingProcess   OpeningProcess?
+  documents        DocumentAsset[]
+
+  @@index([individualClientId])
+  @@index([jurisdictionId])
+}
+
+enum OffshoreStatus {
+  IN_OPENING
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+model JointTenant {
+  id             String      @id @default(cuid())
+  offshoreId     String
+  offshore       OffshoreCompany @relation(fields: [offshoreId], references: [id], onDelete: Cascade)
+  name           String
+  documentType   DocumentType
+  documentNumber String
+  percentage     Decimal     @db.Decimal(5, 2)
+  documentFileId String?
+  documentFile   DocumentAsset? @relation(fields: [documentFileId], references: [id])
+  createdAt      DateTime    @default(now())
+}
+
+model GennesysContract {
+  id         String          @id @default(cuid())
+  offshoreId String          @unique
+  offshore   OffshoreCompany @relation(fields: [offshoreId], references: [id], onDelete: Cascade)
+
+  contractFileId String?
+  contractFile   DocumentAsset? @relation("ContractDoc", fields: [contractFileId], references: [id])
+  contractDate   DateTime?
+
+  implementationValue    Decimal?   @db.Decimal(14, 2)
+  implementationCurrency String     @default("USD")
+  firstInstallmentDue    DateTime?
+  secondInstallmentDue   DateTime?
+
+  maintenanceValue       Decimal?   @db.Decimal(14, 2)
+  maintenanceCurrency    String     @default("USD")
+  maintenancePeriodicity Recurrence?
+
+  portfolioManagement          Boolean @default(false)
+  portfolioFrequency           Recurrence?
+  portfolioAdminFeeEnabled     Boolean @default(false)
+  portfolioAdminFeeRule        String?
+  portfolioPerformanceFeeEnabled Boolean @default(false)
+  portfolioPerformanceFeeRule  String?
+  portfolioNotes               String?
+
+  accountingEnabled        Boolean    @default(false)
+  accountingPeriodicity    Recurrence?
+  accountingTotalValue     Decimal?   @db.Decimal(14, 2)
+  accountingPerPeriodValue Decimal?   @db.Decimal(14, 2)
+
+  dcbeEnabled      Boolean  @default(false)
+  dcbeDeliveryDate DateTime?
+  dcbeRequiredDocs Json     @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Obligation {
+  id                String          @id @default(cuid())
+  offshoreId        String
+  offshore          OffshoreCompany @relation(fields: [offshoreId], references: [id], onDelete: Cascade)
+  templateId        String?
+  template          ObligationTemplate? @relation(fields: [templateId], references: [id])
+  serviceProviderId String?
+  serviceProvider   ServiceProvider?    @relation(fields: [serviceProviderId], references: [id])
+
+  origin          ObligationOrigin
+  nature          String
+  dueDateOriginal DateTime
+  dueDateAdjusted DateTime?
+
+  status             ObligationStatus @default(PENDING)
+  invoiceValue       Decimal?         @db.Decimal(14, 2)
+  invoiceCurrency    String           @default("USD")
+  invoiceFileId      String?
+  invoiceFile        DocumentAsset?   @relation("InvoiceDoc", fields: [invoiceFileId], references: [id])
+  paymentProofFileId String?
+  paymentProofFile   DocumentAsset?   @relation("PaymentProofDoc", fields: [paymentProofFileId], references: [id])
+  paidAt             DateTime?
+
+  recurrenceGroupId String?
+  notes             String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  alertLogs AlertLog[]
+
+  @@index([offshoreId, dueDateOriginal])
+  @@index([status])
+  @@index([recurrenceGroupId])
+}
+
+enum ObligationOrigin {
+  COMPLIANCE_JURISDICTION
+  GENNESYS_IMPLEMENTATION
+  GENNESYS_MAINTENANCE
+  GENNESYS_PORTFOLIO
+  GENNESYS_ACCOUNTING
+  GENNESYS_DCBE
+  OPENING_STAGE
+  MANUAL
+}
+
+enum ObligationStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+model AlertLog {
+  id           String     @id @default(cuid())
+  obligationId String
+  obligation   Obligation @relation(fields: [obligationId], references: [id], onDelete: Cascade)
+  daysBefore   Int
+  sentAt       DateTime   @default(now())
+
+  @@unique([obligationId, daysBefore])
+}
+
+model OpeningProcessTemplate {
+  id             String       @id @default(cuid())
+  jurisdictionId String       @unique
+  jurisdiction   Jurisdiction @relation(fields: [jurisdictionId], references: [id])
+  stage2Items    Json         @default("[]")
+  stage3Items    Json         @default("[]")
+  stage4Items    Json         @default("[]")
+  updatedAt      DateTime     @updatedAt
+}
+
+model OpeningProcess {
+  id                 String           @id @default(cuid())
+  individualClientId String
+  individualClient   IndividualClient @relation(fields: [individualClientId], references: [id])
+  offshoreId         String?          @unique
+  offshore           OffshoreCompany? @relation(fields: [offshoreId], references: [id])
+  jurisdictionId     String
+  currentStage       Int              @default(1)
+  stage1             Json             @default("{}")
+  stage2             Json             @default("{}")
+  stage3             Json             @default("{}")
+  stage4             Json             @default("{}")
+  completedAt        DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  documents DocumentAsset[]
+}
+
+model DocumentAsset {
+  id                  String    @id @default(cuid())
+  filename            String
+  mimeType            String
+  sizeBytes           Int
+  driveFileId         String?
+  driveUrl            String?
+  supabaseStoragePath String?
+  uploadedById        String?
+  individualClientId  String?
+  individualClient    IndividualClient? @relation(fields: [individualClientId], references: [id])
+  offshoreId          String?
+  offshore            OffshoreCompany?  @relation(fields: [offshoreId], references: [id])
+  openingProcessId    String?
+  openingProcess      OpeningProcess?   @relation(fields: [openingProcessId], references: [id])
+  category            DocumentCategory
+  createdAt           DateTime          @default(now())
+
+  jointTenants           JointTenant[]
+  templateForObligations ObligationTemplate[] @relation("TemplateDoc")
+  contractFor            GennesysContract[]   @relation("ContractDoc")
+  invoiceFor             Obligation[]         @relation("InvoiceDoc")
+  paymentProofFor        Obligation[]         @relation("PaymentProofDoc")
+
+  @@index([individualClientId])
+  @@index([offshoreId])
+}
+
+enum DocumentCategory {
+  PERSONAL_ID
+  ADDRESS_PROOF
+  GENNESYS_CONTRACT
+  OBLIGATION_TEMPLATE
+  INVOICE
+  PAYMENT_PROOF
+  OPENING_REQUESTED_DOC
+  OPENING_FILLED_FORM
+  OPENING_SIGNED_DOC
+  OTHER
+}
+
+model DriveFolder {
+  id        String   @id @default(cuid())
+  path      String   @unique
+  driveId   String
+  updatedAt DateTime @updatedAt
+}
+
+model SimulatorCountry {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  flagEmoji    String?
+  countryCode  String   @unique
+  pjTaxConfig  Json
+  pfTaxConfig  Json
+  sourcesNotes String?
+  active       Boolean  @default(true)
+  displayOrder Int      @default(0)
+  updatedAt    DateTime @updatedAt
+}
+
+model SimulatorLead {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  message   String?
+  payload   Json
+  utmSource String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  entityType String
+  entityId   String
+  action     String
+  diff       Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}

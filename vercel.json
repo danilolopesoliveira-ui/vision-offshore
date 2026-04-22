@@ -1,0 +1,7 @@
+{
+  "crons": [
+    { "path": "/api/cron/extend-recurrences", "schedule": "0 4 * * *" },
+    { "path": "/api/cron/send-alerts", "schedule": "0 11 * * *" },
+    { "path": "/api/cron/sync-dcbe", "schedule": "0 5 1 * *" }
+  ]
+}
