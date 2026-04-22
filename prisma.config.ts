@@ -1,12 +1,9 @@
 import { defineConfig } from "prisma/config";
-import { config } from "dotenv";
-import { resolve } from "path";
 
-// Load .env.local for Prisma CLI (Next.js uses .env.local, not .env)
-config({ path: resolve(process.cwd(), ".env.local") });
+// In local dev, load vars from .env.local before running Prisma CLI commands:
+//   node --env-file=.env.local node_modules/.bin/prisma db push
+// In production (Render, Vercel, etc.) env vars are injected by the platform.
 
-// Prisma 7: CLI connection config (migrations, introspection, studio)
-// The PrismaClient at runtime reads DATABASE_URL directly from env.
 export default defineConfig({
   datasource: {
     // Use direct URL (port 5432) for CLI ops — PgBouncer (port 6543) breaks db push/migrations
