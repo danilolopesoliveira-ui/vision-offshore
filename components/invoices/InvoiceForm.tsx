@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createInvoiceAction, buildInvoiceNumber } from "@/app/actions/invoices";
+import { createInvoiceAction } from "@/app/actions/invoices";
+import { buildInvoiceNumber } from "@/lib/invoice-utils";
 import { format } from "date-fns";
 
 const ItemSchema = z.object({

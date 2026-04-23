@@ -12,29 +12,9 @@ import { InvoicePDF } from "@/lib/pdf/invoice-pdf";
 import path from "path";
 import fs from "fs";
 import type { InvoiceItem } from "@/lib/pdf/invoice-pdf";
+import { buildInvoiceNumber } from "@/lib/invoice-utils";
 
 type AR<T = void> = Promise<{ success: true; data: T } | { success: false; error: string }>;
-
-// ── Invoice number generation ────────────────────────────────────────────────
-// Format: {4 consonants of recipient}{total integer}USD{MMDDYYYY}
-export function buildInvoiceNumber(
-  recipientName: string,
-  total: number,
-  issueDate: Date,
-): string {
-  const consonants = recipientName
-    .toUpperCase()
-    .replace(/[^A-Z]/g, "")
-    .replace(/[AEIOU]/g, "")
-    .slice(0, 4);
-
-  const totalInt = Math.round(total);
-  const mm = String(issueDate.getMonth() + 1).padStart(2, "0");
-  const dd = String(issueDate.getDate()).padStart(2, "0");
-  const yyyy = issueDate.getFullYear();
-
-  return `${consonants}${totalInt}USD${mm}${dd}${yyyy}`;
-}
 
 // ── Zod schemas ──────────────────────────────────────────────────────────────
 const InvoiceItemSchema = z.object({
