@@ -10,13 +10,13 @@ export async function POST(request: Request) {
 
     const accessCode = await prisma.accessCode.findUnique({
       where: { code: code.trim().toUpperCase() },
-      select: { usedBy: true, expiresAt: true, intendedRole: true },
+      select: { usedBy: true, expiresAt: true, intendedRole: true, isReusable: true },
     });
 
     if (!accessCode) {
       return NextResponse.json({ valid: false, error: "Código não encontrado." });
     }
-    if (accessCode.usedBy) {
+    if (!accessCode.isReusable && accessCode.usedBy) {
       return NextResponse.json({ valid: false, error: "Código já utilizado." });
     }
     if (accessCode.expiresAt < new Date()) {

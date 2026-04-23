@@ -30,8 +30,10 @@ model AccessCode {
   createdById  String
   createdBy    User      @relation("CodeCreator", fields: [createdById], references: [id])
   intendedRole UserRole
+  isReusable   Boolean   @default(false)
   usedBy       String?
   usedAt       DateTime?
+  useCount     Int       @default(0)
   expiresAt    DateTime
   createdAt    DateTime  @default(now())
 }

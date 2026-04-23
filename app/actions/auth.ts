@@ -63,7 +63,7 @@ export async function signupAction(formData: FormData): Promise<ActionResult> {
   const accessCode = await prisma.accessCode.findUnique({ where: { code } });
 
   if (!accessCode) return { success: false, error: "Código de acesso inválido." };
-  if (accessCode.usedBy) return { success: false, error: "Código de acesso já utilizado." };
+  if (!accessCode.isReusable && accessCode.usedBy) return { success: false, error: "Código de acesso já utilizado." };
   if (accessCode.expiresAt < new Date()) return { success: false, error: "Código de acesso expirado." };
 
   // Check if email already exists in our DB
@@ -96,7 +96,9 @@ export async function signupAction(formData: FormData): Promise<ActionResult> {
 
     await tx.accessCode.update({
       where: { id: accessCode.id },
-      data: { usedBy: user.id, usedAt: new Date() },
+      data: accessCode.isReusable
+        ? { useCount: { increment: 1 } }
+        : { usedBy: user.id, usedAt: new Date(), useCount: { increment: 1 } },
     });
 
     return user;
