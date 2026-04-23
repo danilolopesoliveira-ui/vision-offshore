@@ -13,7 +13,7 @@ const LoginSchema = z.object({
 });
 
 const SignupSchema = z.object({
-  code: z.string().min(1, "Código obrigatório"),
+  code: z.string().min(1, "Código obrigatório").transform((v) => v.trim().toUpperCase()),
   email: z.string().email("E-mail inválido"),
   password: z.string().min(8, "Senha deve ter ao menos 8 caracteres"),
   name: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
