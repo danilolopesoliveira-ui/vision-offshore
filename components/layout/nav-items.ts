@@ -11,6 +11,7 @@ import {
   UserCog,
   BarChart2,
   ScrollText,
+  Receipt,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { UserRole } from "@prisma/client";
@@ -36,6 +37,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Obrigações", href: "/obrigacoes", icon: ClipboardList },
       { label: "Abertura", href: "/abertura", icon: FolderOpen },
       { label: "Simulador", href: "/simulador", icon: Calculator },
+      { label: "Invoices", href: "/invoices", icon: Receipt },
     ],
   },
   {

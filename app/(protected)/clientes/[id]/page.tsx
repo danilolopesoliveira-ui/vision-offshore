@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Pencil, Building2, FileText, DollarSign } from "lucide-react";
 import type { Address } from "@/types/address";
+import DocumentRepository from "@/components/documents/DocumentRepository";
 
 const DOC_LABEL = { CPF: "CPF", CNH: "CNH", PASSPORT: "Passaporte" } as const;
 const STATUS_LABEL = {
@@ -210,38 +211,18 @@ export default async function ClientePage({ params }: Props) {
 
         {/* Documentos tab */}
         <TabsContent value="documentos" className="mt-4">
-          {client.documents.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                Nenhum documento anexado.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-2">
-              {client.documents.map((doc) => (
-                <Card key={doc.id}>
-                  <CardContent className="flex items-center justify-between py-3">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{doc.filename}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {doc.category} · {(doc.sizeBytes / 1024).toFixed(0)} KB
-                        </p>
-                      </div>
-                    </div>
-                    {doc.driveUrl && (
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={doc.driveUrl} target="_blank" rel="noopener noreferrer">
-                          Abrir
-                        </a>
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle>Repositório de documentos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DocumentRepository
+                initialDocs={client.documents}
+                clientName={client.name}
+                individualClientId={client.id}
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

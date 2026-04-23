@@ -12,6 +12,8 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/webp",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ]);
 
 const CATEGORY_FOLDER_MAP: Record<DocumentCategory, string> = {
@@ -24,6 +26,10 @@ const CATEGORY_FOLDER_MAP: Record<DocumentCategory, string> = {
   OPENING_REQUESTED_DOC: "processo-abertura",
   OPENING_FILLED_FORM: "processo-abertura",
   OPENING_SIGNED_DOC: "processo-abertura",
+  ACCOUNTING_REPORT: "contabilidade",
+  BANK_STATEMENT: "extratos-bancarios",
+  TAX_RETURN: "declaracoes-fiscais",
+  CORPORATE_DOCUMENT: "documentos-societarios",
   OTHER: "outros",
 };
 
@@ -40,6 +46,7 @@ export interface UploadDocumentOptions {
   filename: string;
   mimeType: string;
   category: DocumentCategory;
+  description?: string;
   uploadedById: string;
   clientName: string;
   offshoreName?: string;
@@ -81,6 +88,7 @@ export async function uploadDocument(opts: UploadDocumentOptions): Promise<Docum
       filename: opts.filename,
       mimeType: opts.mimeType,
       sizeBytes: opts.buffer.length,
+      description: opts.description ?? null,
       driveFileId,
       driveUrl,
       category: opts.category,

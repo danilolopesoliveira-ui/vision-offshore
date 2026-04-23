@@ -13,6 +13,10 @@ const VALID_CATEGORIES = new Set<DocumentCategory>([
   "OPENING_REQUESTED_DOC",
   "OPENING_FILLED_FORM",
   "OPENING_SIGNED_DOC",
+  "ACCOUNTING_REPORT",
+  "BANK_STATEMENT",
+  "TAX_RETURN",
+  "CORPORATE_DOCUMENT",
   "OTHER",
 ]);
 
@@ -31,6 +35,7 @@ export async function POST(req: Request) {
 
   const file = formData.get("file");
   const category = formData.get("category") as DocumentCategory | null;
+  const description = formData.get("description") as string | null;
   const clientName = formData.get("clientName") as string | null;
   const offshoreName = formData.get("offshoreName") as string | null;
   const individualClientId = formData.get("individualClientId") as string | null;
@@ -58,6 +63,7 @@ export async function POST(req: Request) {
       filename: file.name,
       mimeType: file.type,
       category,
+      description: description?.trim() || undefined,
       uploadedById: session.id,
       clientName,
       offshoreName: offshoreName ?? undefined,

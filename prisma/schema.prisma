@@ -311,6 +311,7 @@ model DocumentAsset {
   filename            String
   mimeType            String
   sizeBytes           Int
+  description         String?
   driveFileId         String?
   driveUrl            String?
   supabaseStoragePath String?
@@ -344,6 +345,10 @@ enum DocumentCategory {
   OPENING_REQUESTED_DOC
   OPENING_FILLED_FORM
   OPENING_SIGNED_DOC
+  ACCOUNTING_REPORT
+  BANK_STATEMENT
+  TAX_RETURN
+  CORPORATE_DOCUMENT
   OTHER
 }
 
@@ -395,4 +400,23 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([userId])
   @@index([createdAt])
+}
+
+model Invoice {
+  id               String   @id @default(cuid())
+  invoiceNumber    String   @unique
+  recipientName    String
+  recipientAddress String
+  items            Json
+  total            Decimal  @db.Decimal(14, 2)
+  currency         String   @default("USD")
+  issueDate        DateTime
+  driveFileId      String?
+  driveUrl         String?
+  createdById      String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([recipientName])
 }

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Pencil, DollarSign, ClipboardList, FileText, Users } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import DocumentRepository from "@/components/documents/DocumentRepository";
 
 const STATUS_LABEL = {
   IN_OPENING: "Em abertura",
@@ -346,38 +347,20 @@ export default async function OffshorePage({ params }: Props) {
 
         {/* Documentos */}
         <TabsContent value="documentos" className="mt-4">
-          {offshore.documents.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                Nenhum documento anexado.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-2">
-              {offshore.documents.map((doc) => (
-                <Card key={doc.id}>
-                  <CardContent className="flex items-center justify-between py-3">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{doc.filename}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {doc.category} · {(doc.sizeBytes / 1024).toFixed(0)} KB
-                        </p>
-                      </div>
-                    </div>
-                    {doc.driveUrl && (
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={doc.driveUrl} target="_blank" rel="noopener noreferrer">
-                          Abrir
-                        </a>
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle>Repositório de documentos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DocumentRepository
+                initialDocs={offshore.documents}
+                clientName={offshore.individualClient.name}
+                offshoreName={offshore.name}
+                individualClientId={offshore.individualClient.id}
+                offshoreId={offshore.id}
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
